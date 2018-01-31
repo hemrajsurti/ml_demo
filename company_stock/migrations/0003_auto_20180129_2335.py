@@ -13,17 +13,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RemoveField(
-            model_name='classiferalgo',
-            name='id',
-        ),
-        migrations.RemoveField(
             model_name='companyname',
             name='id',
-        ),
-        migrations.AlterField(
-            model_name='classiferalgo',
-            name='classifer_name',
-            field=models.CharField(max_length=50, primary_key=True, serialize=False),
         ),
         migrations.AlterField(
             model_name='companyname',

@@ -1,4 +1,3 @@
-import psycopg2
 import requests
 import bs4 as bs
 import os, django
@@ -6,14 +5,12 @@ from pandas_datareader import data as web
 from pandas_datareader._utils import RemoteDataError
 import datetime as dt
 import numpy as np
-import pandas as pd
-from matplotlib import pyplot as plt
 # from django.core.management import settings
 # settings.configure()
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ml_demo.settings")
 django.setup()
 from ml_demo.settings import db_engine
-from company_stock.models import CompanyDetails, ClassiferAlgo, CompanyStocks
+from company_stock.models import CompanyDetails, CompanyStocks
 
 def save_nifty_50_tickers():
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.27 Safari/537.17'}
@@ -63,22 +60,5 @@ def get_data_from_yahoo():
             print "Remote Data Error"
         #exit()
 
-get_data_from_yahoo()
+#get_data_from_yahoo()
 
-# def generate_stock_graph(ticker='ADANIPORTS'):
-#     qs = CompanyStocks.objects.select_related().filter(ticker__yahoo_sht=ticker)
-#     q = qs.values('adj_close', 'record_date', 'volume')
-#     df = pd.DataFrame.from_records(q)
-#     df.head()
-#     df['100ma'] = df['adj_close'].rolling(window=100, min_periods=0).mean()
-#     #print df.head()
-#     f = plt.figure(figsize=(7, 1))
-#     ax1 = plt.subplot2grid((7, 1), (0, 0), 5, 1)
-#     ax2 = plt.subplot2grid((7, 1), (6, 0), 1, 1, sharex=ax1)
-#
-#     ax1.plot(df["100ma"])
-#     ax1.plot(df["adj_close"])
-#     ax2.plot(df["volume"])
-#     plt.show()
-#
-# generate_stock_graph()

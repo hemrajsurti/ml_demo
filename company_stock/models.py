@@ -36,21 +36,3 @@ class CompanyStocks(models.Model):
         return "{}: {}".format(self.ticker.name, self.stock_id)
 
 
-class LargeObjectField(models.Field):
-    description = "lo"
-    def db_type(self, connection):
-        return 'lo'
-
-
-class ClassiferAlgo(models.Model):
-    classifer_name = models.CharField(max_length=50, primary_key=True)
-    classifier_pickled_data = LargeObjectField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return "{}: {}".format(self.name, self.yahoo_sht)
-
-    def save(self, *args, **kwargs):
-        self.classifer_name = self.name.lower()
-        super(ClassiferAlgo, self).save(*args, **kwargs)

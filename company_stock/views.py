@@ -1,6 +1,6 @@
 from django.shortcuts import render
 import traceback
-from company_stock.models import CompanyStocks
+from company_stock.models import CompanyStocks, CompanyDetails
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
@@ -31,7 +31,7 @@ def closegraph(ticker='ADANIPORTS', start_date=None, end_date=None):
     #df['100ma'] = df['adj_close'].rolling(window=100, min_periods=0).mean()
     #print df.head()
     style.use('ggplot')
-    f = plt.figure(figsize=(10, 7))
+    f = plt.figure(figsize=(8, 7))
     ax1 = plt.subplot2grid((10, 7), (0, 0), rowspan=7, colspan=7)
     ax2 = plt.subplot2grid((10, 7), (8, 0), rowspan=2, colspan=7, sharex=ax1)
 
@@ -48,20 +48,28 @@ def closegraph(ticker='ADANIPORTS', start_date=None, end_date=None):
     return figdata_png
 
 
-def generate_ohlc_graph(ticker='ADANIPORTS', start_date=None, end_date=None):
-    style.use('ggplot')
+def fetch_company_stocks(ticker, start_date=None, end_date=None):
     qs = CompanyStocks.objects.filter(
-            ticker__yahoo_sht=ticker
+        ticker__yahoo_sht=ticker
     )
     if start_date and end_date:
         qs = qs.filter(created_at__range=(start_date, end_date))
-    q = qs.only('adj_close', 'record_date', 'volume', 'high', 'low', 'open').extra(
+    q = qs.only('adj_close', 'record_date', 'volume', 'high', 'low', 'open', 'close').extra(
             {'adj_close': "CAST(adj_close as FLOAT)",
                   'volume': "CAST(volume as FLOAT)",
                   'high': "CAST(high as FLOAT)",
                   'low': "CAST(low as FLOAT)",
-                  'open': "CAST(open as FLOAT)"})
-    df = pd.DataFrame.from_records([rec.__dict__ for rec in q])
+                  'open': "CAST(open as FLOAT)",
+                  'close': "CAST(close as FLOAT)",
+             })
+    data = [rec.__dict__ for rec in q]
+    return data
+
+
+def generate_ohlc_graph(ticker='ADANIPORTS', start_date=None, end_date=None):
+    style.use('ggplot')
+    data = fetch_company_stocks(ticker, start_date, end_date)
+    df = pd.DataFrame.from_records(data)
     df['record_date'] = pd.to_datetime(df['record_date'])
     df.set_index(['record_date'], inplace=True)
     df.info()
@@ -72,7 +80,7 @@ def generate_ohlc_graph(ticker='ADANIPORTS', start_date=None, end_date=None):
     df_ohlc.reset_index(inplace=True)
     df_ohlc['record_date'] = df_ohlc['record_date'].map(mdates.date2num)
     #print df.head()
-    fig = plt.figure(figsize=(7, 7))
+    fig = plt.figure(figsize=(8, 7))
     ax1 = plt.subplot2grid((10, 7), (0, 0), rowspan=6, colspan=7)
     ax2 = plt.subplot2grid((10, 7), (7, 0), rowspan=3, colspan=7)
     ax1.xaxis_date()
@@ -181,6 +189,11 @@ def do_ml(ticker, start_date=None, end_date=None):
     #print''
     return confidence, predictions
 
+def fetch_cmpy_details():
+    data = CompanyDetails.objects.only('yahoo_sht', 'name')
+    return [d.__dict__ for d in data]
+
+
 def index(request):
     """Handle all request types and return response as per DB url, method/platform/org_id
     Args:
@@ -190,23 +203,38 @@ def index(request):
     ticker_graph = ''
     ohlc_graph = ''
     confidence = 'NA'
-    predictions = {1: 'NA', -1: 'NA', 0: 'NA'}
+    predictions = {'buy': 'NA', 'sell': 'NA', 'hold': 'NA'}
+    data = []
     try:
+        ticker = 'ADANIPORTS'
+        if request.POST:
+            ticker = request.POST['cmpy_name']
+        default_ticker = ticker
         current_time = datetime.now()
         start_date = (current_time - timedelta(days=10)).strftime('%Y-%m-%d')
         end_date = current_time.strftime('%Y-%m-%d')
-        #ticker_graph = closegraph('ADANIPORTS', start_date, end_date)
-        #ohlc_graph = generate_ohlc_graph(ticker='ADANIPORTS')
+        ticker_graph = closegraph(default_ticker, start_date, end_date)
+        ohlc_graph = generate_ohlc_graph(default_ticker)
         start_date = (current_time - timedelta(days=9)).strftime('%Y-%m-%d')
         #process_data_for_labels('ADANIPORTS', start_date, end_date)
-        confidence, predictions = do_ml('ADANIPORTS', start_date=None, end_date=None)
-        predictions =  dict(Counter(predictions))
+        confidence, predictions = do_ml(default_ticker, start_date=None, end_date=None)
+        predictions = dict(Counter(predictions))
+        #print predictions
+        predictions['buy'] = predictions.pop(1, 0)
+        predictions['sell'] = predictions.pop(-1, 0)
+        predictions['hold'] = predictions.pop(0, 0)
+        start_date = (current_time - timedelta(days=10)).strftime('%Y-%m-%d')
+        data = fetch_company_stocks(default_ticker, start_date, end_date)
+        cmpy_data = fetch_cmpy_details()
     except Exception:
         print traceback.format_exc()
-
+    print predictions
     return render(request, 'index.html', {
             'ticker_graph': ticker_graph.decode('utf8'),
             'ohlc_graph': ohlc_graph.decode('utf-8'),
             'confidence': confidence,
-            'predictions': predictions
+            'predictions': predictions,
+            'stock_data': data,
+            'cmpy_data': cmpy_data,
+            'current_ticker': default_ticker
         })

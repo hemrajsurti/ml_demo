@@ -24,5 +24,6 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
 ]
 urlpatterns += [url(r'', include('company_stock.urls'))]
+urlpatterns += [url(r'^twitter/sentiment/$', 'twitters.views.sentiment', name='sentiment')]
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
