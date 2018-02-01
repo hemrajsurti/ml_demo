@@ -60,7 +60,39 @@
                         </div>
                         <!-- /.panel-heading -->
                         <div class="panel-body">
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Tweets</th>
+                                                    <th>Sentiment</th>
+                                                    <th>Confidence</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for t in ts %}
+                                                <tr>
+                                                    <td>{{ t.tweets }}</td>
+                                                    <td>{% if t.sentiment == 'neg'%}
+                                                        <i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
+                                                        {% else %}<i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+                                                        : {{ t.sentiment }}
+                                                        {% endif %}</td>
+                                                    <td>{{ t.confidence }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <!-- /.table-responsive -->
+                                </div>
+                                <!-- /.col-lg-4 (nested) -->
 
+                                <!-- /.col-lg-8 (nested) -->
+                            </div>
+                            <!-- /.row -->
                         </div>
                         <!-- /.panel-body -->
                     </div>

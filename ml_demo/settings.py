@@ -146,3 +146,4 @@ STATICFILES_DIRS = (
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 SILENCED_SYSTEM_CHECKS = ['urls.W001','urls.W005']
+STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'

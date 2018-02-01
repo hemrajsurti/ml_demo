@@ -2,15 +2,17 @@ from django.shortcuts import render
 from nltk.classify import ClassifierI
 from statistics import mode
 from twitters.utils import ascii_unpickle
-from twitters.models import TwitterClassiferAlgo
+from twitters.models import TwitterClassiferAlgo, Tweets
 import traceback
 import nltk
 from ml_demo.config import nltk_data_path
 nltk.data.path.append(nltk_data_path)
 from nltk.tokenize import word_tokenize
-
+import json
+from django.http import HttpResponse
 import os
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
 word_file_path = os.path.join(os.path.join(settings.BASE_DIR, 'twitters'), 'data')
 
@@ -63,8 +65,16 @@ def sent_analyse(text):
 
 def sentiment(request):
     try:
-        print sent_analyse("This movie was utter junk. There were absolutely 0 pythons. I don't see what the point was at all. Horrible movie, 0/10")
+        #print sent_analyse("This movie was utter junk. There were absolutely 0 pythons. I don't see what the point was at all. Horrible movie, 0/10")
+        pass
     except Exception:
         print traceback.format_exc()
     return render(request, 'sentiments.html', {})
+
+@csrf_exempt
+def show_tweets(request):
+    t = Tweets.objects.all().order_by('created_at')[:20]
+    context = {"ts": t}
+    response = HttpResponse(json.dumps(context), content_type='application/json')
+    return response
 
